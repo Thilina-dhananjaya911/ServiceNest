@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="nestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#4F46E5" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Shield Container -->
+  <rect x="15" y="15" width="170" height="170" rx="44" fill="url(#nestGrad)" filter="url(#shadow)" />
+  
+  <!-- House Roof & Nest Symbol -->
+  <path d="M100 48 L152 92 L138 92 L138 138 L62 138 L62 92 L48 92 Z" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- Inner Nest Curve -->
+  <path d="M74 116 Q100 138 126 116" fill="none" stroke="url(#accentGrad)" stroke-width="10" stroke-linecap="round" />
+  
+  <!-- Central Sparkle / Star Node -->
+  <circle cx="100" cy="84" r="10" fill="#FFFFFF" />
+  <circle cx="100" cy="84" r="5" fill="#4F46E5" />
+</svg>
