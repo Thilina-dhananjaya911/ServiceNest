@@ -6,66 +6,87 @@ const providerProfileSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true
+      unique: true,
     },
 
     description: {
       type: String,
       default: "",
-      trim: true
+      trim: true,
     },
 
     experienceYears: {
       type: Number,
+      required: true,
+      min: 0,
       default: 0,
-      min: 0
-    },
-
-    phone: {
-      type: String,
-      default: ""
-    },
-
-    address: {
-      type: String,
-      default: ""
     },
 
     province: {
       type: String,
-      required: true
+      default: "",
+      trim: true,
     },
 
     district: {
       type: String,
-      required: true
+      default: "",
+      trim: true,
     },
 
     area: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
     },
 
-    verificationStatus: {
+    address: {
       type: String,
-      enum: ["pending", "verified", "rejected"],
-      default: "pending"
+      default: "",
+      trim: true,
     },
 
-    averageRating: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    ratingAverage: {
       type: Number,
       default: 0,
       min: 0,
-      max: 5
+      max: 5,
     },
 
     totalReviews: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+      min: 0,
+    },
+
+    completedJobs: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+
+    isNewProvider: {
+      type: Boolean,
+      default: true,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

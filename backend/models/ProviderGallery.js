@@ -1,11 +1,21 @@
 const mongoose = require("mongoose");
 
-const serviceCategorySchema = new mongoose.Schema(
+const providerGallerySchema = new mongoose.Schema(
   {
-    name: {
+    providerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    imageUrl: {
       type: String,
       required: true,
-      unique: true,
+    },
+
+    title: {
+      type: String,
+      default: "",
       trim: true,
     },
 
@@ -13,17 +23,6 @@ const serviceCategorySchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
-    },
-
-    icon: {
-      type: String,
-      default: "",
-    },
-
-    basePrice: {
-      type: Number,
-      default: 0,
-      min: 0,
     },
 
     isActive: {
@@ -37,6 +36,6 @@ const serviceCategorySchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model(
-  "ServiceCategory",
-  serviceCategorySchema
+  "ProviderGallery",
+  providerGallerySchema
 );
