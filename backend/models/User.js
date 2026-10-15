@@ -2,48 +2,86 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    fullName: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+    },
+
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
       lowercase: true,
-      trim: true
     },
 
     password: {
       type: String,
-      required: true
+      required: true,
+      minlength: 6,
     },
 
     role: {
       type: String,
       enum: ["customer", "provider", "admin"],
-      required: true
+      required: true,
     },
 
-    phone: {
+    contactNo: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
+    },
+
+    address: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    city: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    nicNo: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    nicPhoto: {
+      type: String,
+      default: "",
     },
 
     profileImage: {
       type: String,
-      default: ""
+      default: "",
     },
 
     isActive: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
