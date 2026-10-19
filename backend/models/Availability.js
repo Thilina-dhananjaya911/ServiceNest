@@ -5,10 +5,10 @@ const availabilitySchema = new mongoose.Schema(
     providerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
-    day: {
+    dayOfWeek: {
       type: String,
       enum: [
         "Monday",
@@ -17,29 +17,34 @@ const availabilitySchema = new mongoose.Schema(
         "Thursday",
         "Friday",
         "Saturday",
-        "Sunday"
+        "Sunday",
       ],
-      required: true
+      required: true,
     },
 
     startTime: {
       type: String,
-      required: true
+      required: true,
     },
 
     endTime: {
       type: String,
-      required: true
+      required: true,
     },
 
     isAvailable: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
+);
+
+availabilitySchema.index(
+  { providerId: 1, dayOfWeek: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model(

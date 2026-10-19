@@ -6,26 +6,33 @@ const serviceCategorySchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      trim: true
+      trim: true,
     },
 
     description: {
       type: String,
-      default: ""
+      default: "",
+      trim: true,
     },
 
     icon: {
       type: String,
-      default: ""
+      default: "",
+    },
+
+    basePrice: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     isActive: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

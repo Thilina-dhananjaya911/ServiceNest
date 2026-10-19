@@ -1,5 +1,4 @@
 const ProviderProfile = require("../models/ProviderProfile");
-const ProviderService = require("../models/ProviderService");
 
 // Create provider profile
 const createProviderProfile = async (req, res) => {
@@ -81,7 +80,7 @@ const getMyProviderProfile = async (req, res) => {
       userId: req.user._id,
     }).populate(
       "userId",
-      "fullName username email contactNo profileImage city"
+      "fullName username email contactNo profileImage"
     );
 
     if (!profile) {
@@ -217,7 +216,7 @@ const getAllProviders = async (req, res) => {
       isVerified: true,
     }).populate(
       "userId",
-      "fullName username email contactNo profileImage city"
+      "fullName username email contactNo profileImage"
     );
 
     res.status(200).json({

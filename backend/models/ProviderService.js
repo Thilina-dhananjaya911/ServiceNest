@@ -5,38 +5,46 @@ const providerServiceSchema = new mongoose.Schema(
     providerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
-      required: true
+      required: true,
     },
 
     priceFrom: {
       type: Number,
-      min: 0
+      required: true,
+      min: 0,
     },
 
     priceTo: {
       type: Number,
-      min: 0
+      default: null,
+      min: 0,
     },
 
     description: {
       type: String,
-      default: ""
+      default: "",
+      trim: true,
     },
 
     isActive: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
+);
+
+providerServiceSchema.index(
+  { providerId: 1, serviceId: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model(

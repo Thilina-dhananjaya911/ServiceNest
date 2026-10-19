@@ -5,37 +5,47 @@ const reviewSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     providerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     serviceRequestId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ServiceRequest",
       required: true,
-      unique: true
     },
 
     rating: {
       type: Number,
       required: true,
       min: 1,
-      max: 5
+      max: 5,
     },
 
     comment: {
       type: String,
-      default: ""
-    }
+      default: "",
+      trim: true,
+    },
+
+    isVisible: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
+);
+
+reviewSchema.index(
+  { serviceRequestId: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model("Review", reviewSchema);

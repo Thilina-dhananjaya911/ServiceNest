@@ -5,51 +5,36 @@ const serviceRequestSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     providerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Service",
-      required: true
+      required: true,
     },
 
     description: {
       type: String,
-      required: true
+      default: "",
+      trim: true,
     },
 
-    location: {
-      address: {
-        type: String,
-        required: true
-      },
-
-      city: {
-        type: String,
-        required: true
-      },
-
-      district: {
-        type: String,
-        default: ""
-      }
-    },
-
-    preferredDate: {
-      type: Date,
-      required: true
-    },
-
-    preferredTime: {
+    address: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
+    },
+
+    requestedDate: {
+      type: Date,
+      required: true,
     },
 
     status: {
@@ -60,13 +45,19 @@ const serviceRequestSchema = new mongoose.Schema(
         "rejected",
         "in_progress",
         "completed",
-        "cancelled"
+        "cancelled",
       ],
-      default: "pending"
-    }
+      default: "pending",
+    },
+
+    agreedPrice: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
