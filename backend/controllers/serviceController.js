@@ -4,24 +4,19 @@ const ServiceCategory = require("../models/ServiceCategory");
 // Create a service
 const createService = async (req, res) => {
   try {
-    const {
-      categoryId,
-      name,
-      description,
-      basePrice,
-    } = req.body;
+    const { categoryId, name, description, basePrice } = req.body;
 
     if (!categoryId || !name || !name.trim() || basePrice === undefined) {
-  return res.status(400).json({
-    message: "Category, service name and base price are required",
-  });
-}
+      return res.status(400).json({
+        message: "Category, service name and base price are required",
+      });
+    }
 
     if (typeof basePrice !== "number" || basePrice < 0) {
-  return res.status(400).json({
-    message: "Base price must be a non-negative number",
-  });
-}
+      return res.status(400).json({
+        message: "Base price must be a non-negative number",
+      });
+    }
     // Check whether the category exists
     const category = await ServiceCategory.findById(categoryId);
 
@@ -69,13 +64,37 @@ const createService = async (req, res) => {
   }
 };
 
-
-// Get all active services
+// Get active services, with optional search
 const getActiveServices = async (req, res) => {
   try {
-    const services = await Service.find({
+    const { search } = req.query;
+
+    const filter = {
       isActive: true,
-    })
+    };
+
+    if (search && search.trim()) {
+      const searchRegex = {
+        $regex: search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $options: "i",
+      };
+
+      const matchingCategories = await ServiceCategory.find({
+        name: searchRegex,
+        isActive: true,
+      }).select("_id");
+
+      filter.$or = [
+        { name: searchRegex },
+        {
+          categoryId: {
+            $in: matchingCategories.map((category) => category._id),
+          },
+        },
+      ];
+    }
+
+    const services = await Service.find(filter)
       .populate("categoryId", "name description icon basePrice")
       .sort({ name: 1 });
 
@@ -92,7 +111,6 @@ const getActiveServices = async (req, res) => {
     });
   }
 };
-
 
 // Get services by category
 const getServicesByCategory = async (req, res) => {
@@ -120,7 +138,6 @@ const getServicesByCategory = async (req, res) => {
   }
 };
 
-
 // Get all services
 // Admin use
 const getAllServices = async (req, res) => {
@@ -143,15 +160,13 @@ const getAllServices = async (req, res) => {
   }
 };
 
-
 // Get service by ID
 const getServiceById = async (req, res) => {
   try {
     const service = await Service.findOne({
-  _id: req.params.id,
-  isActive: true,
-})
-  .populate("categoryId", "name description icon basePrice");
+      _id: req.params.id,
+      isActive: true,
+    }).populate("categoryId", "name description icon basePrice");
 
     if (!service) {
       return res.status(404).json({
@@ -172,17 +187,10 @@ const getServiceById = async (req, res) => {
   }
 };
 
-
 // Update service
 const updateService = async (req, res) => {
   try {
-    const {
-      categoryId,
-      name,
-      description,
-      basePrice,
-      isActive,
-    } = req.body;
+    const { categoryId, name, description, basePrice, isActive } = req.body;
 
     const service = await Service.findById(req.params.id);
 
@@ -237,14 +245,14 @@ const updateService = async (req, res) => {
     }
 
     if (basePrice !== undefined) {
-  if (typeof basePrice !== "number" || basePrice < 0) {
-    return res.status(400).json({
-      message: "Base price must be a non-negative number",
-    });
-  }
+      if (typeof basePrice !== "number" || basePrice < 0) {
+        return res.status(400).json({
+          message: "Base price must be a non-negative number",
+        });
+      }
 
-  service.basePrice = basePrice;
-}
+      service.basePrice = basePrice;
+    }
 
     if (isActive !== undefined) {
       service.isActive = isActive;
@@ -264,7 +272,6 @@ const updateService = async (req, res) => {
     });
   }
 };
-
 
 // Delete service
 const deleteService = async (req, res) => {
@@ -290,7 +297,6 @@ const deleteService = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   createService,
