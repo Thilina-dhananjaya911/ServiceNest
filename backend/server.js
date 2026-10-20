@@ -1,3 +1,4 @@
+
 const express = require("express");
 const dotenv = require("dotenv");
 
@@ -15,8 +16,7 @@ const serviceRequestRoutes = require("./routes/serviceRequestRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
-
+const customerHomeRoutes = require("./routes/customerHomeRoutes");
 
 const app = express();
 
@@ -34,7 +34,7 @@ app.use("/api/service-requests", serviceRequestRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use("/api/customer", customerHomeRoutes);
 
 app.get("/", (req, res) => {
   res.json({
