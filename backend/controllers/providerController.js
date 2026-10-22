@@ -1,4 +1,7 @@
 const ProviderProfile = require("../models/ProviderProfile");
+const ProviderService = require("../models/ProviderService");
+const Service = require("../models/Service");
+const ServiceCategory = require("../models/ServiceCategory");
 
 // Create provider profile
 const createProviderProfile = async (req, res) => {
@@ -209,15 +212,152 @@ const getProviderProfileByUserId = async (req, res) => {
 };
 
 // Get all active provider profiles
+
 const getAllProviders = async (req, res) => {
   try {
-    const providers = await ProviderProfile.find({
+    const { search, category, location } = req.query;
+
+    // Get active and verified provider profiles
+    const filter = {
       isActive: true,
       isVerified: true,
-    }).populate(
-      "userId",
-      "fullName username email contactNo profileImage"
-    );
+    };
+
+    if (location && location.trim()) {
+      const locationRegex = new RegExp(
+        location.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i"
+      );
+
+      filter.$or = [
+        { area: locationRegex },
+        { district: locationRegex },
+        { province: locationRegex },
+      ];
+    }
+
+    let providers = await ProviderProfile.find(filter)
+      .populate(
+        "userId",
+        "fullName username email contactNo profileImage"
+      )
+      .sort({ isNewProvider: -1, ratingAverage: -1, createdAt: -1 })
+      .lean();
+
+    // Get active services offered by these providers
+    const providerIds = providers
+      .filter((provider) => provider.userId)
+      .map((provider) => provider.userId._id);
+
+    const offers = await ProviderService.find({
+      providerId: { $in: providerIds },
+      isActive: true,
+    })
+      .populate({
+        path: "serviceId",
+        select: "name categoryId",
+        populate: {
+          path: "categoryId",
+          select: "name icon",
+        },
+      })
+      .lean();
+
+    const offersByProvider = {};
+
+    offers.forEach((offer) => {
+      if (!offer.serviceId) return;
+
+      const providerId = offer.providerId.toString();
+
+      if (!offersByProvider[providerId]) {
+        offersByProvider[providerId] = [];
+      }
+
+      offersByProvider[providerId].push(offer);
+    });
+
+    providers = providers.map((provider) => {
+      const providerOffers =
+        offersByProvider[provider.userId?._id.toString()] || [];
+
+      const serviceNames = [
+        ...new Set(
+          providerOffers.map((offer) => offer.serviceId.name)
+        ),
+      ];
+
+      const categories = [
+        ...new Map(
+          providerOffers
+            .filter((offer) => offer.serviceId.categoryId)
+            .map((offer) => [
+              offer.serviceId.categoryId._id.toString(),
+              {
+                _id: offer.serviceId.categoryId._id,
+                name: offer.serviceId.categoryId.name,
+                icon: offer.serviceId.categoryId.icon,
+              },
+            ])
+        ).values(),
+      ];
+
+      const pricesFrom = providerOffers.map(
+        (offer) => offer.priceFrom
+      );
+
+      const pricesTo = providerOffers.map((offer) =>
+        offer.priceTo != null ? offer.priceTo : offer.priceFrom
+      );
+
+      return {
+        ...provider,
+        services: serviceNames,
+        categories,
+        priceFrom: pricesFrom.length
+          ? Math.min(...pricesFrom)
+          : null,
+        priceTo: pricesTo.length
+          ? Math.max(...pricesTo)
+          : null,
+      };
+    });
+
+    // Filter by provider name, username, service, or category
+    if (search && search.trim()) {
+      const searchText = search.trim().toLowerCase();
+
+      providers = providers.filter((provider) => {
+        const fullName = provider.userId?.fullName || "";
+        const username = provider.userId?.username || "";
+        const serviceMatch = provider.services.some((name) =>
+          name.toLowerCase().includes(searchText)
+        );
+        const categoryMatch = provider.categories.some((item) =>
+          item.name.toLowerCase().includes(searchText)
+        );
+
+        return (
+          fullName.toLowerCase().includes(searchText) ||
+          username.toLowerCase().includes(searchText) ||
+          serviceMatch ||
+          categoryMatch
+        );
+      });
+    }
+
+    // Filter by category name or category ID
+    if (category && category.trim()) {
+      const categoryText = category.trim().toLowerCase();
+
+      providers = providers.filter((provider) =>
+        provider.categories.some(
+          (item) =>
+            item._id.toString() === category.trim() ||
+            item.name.toLowerCase() === categoryText
+        )
+      );
+    }
 
     res.status(200).json({
       message: "Providers retrieved successfully",
@@ -233,6 +373,7 @@ const getAllProviders = async (req, res) => {
   }
 };
 
+
 module.exports = {
   createProviderProfile,
   getMyProviderProfile,
@@ -240,3 +381,4 @@ module.exports = {
   getProviderProfileByUserId,
   getAllProviders,
 };
+
