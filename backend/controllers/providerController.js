@@ -237,12 +237,26 @@ const getAllProviders = async (req, res) => {
     }
 
     let providers = await ProviderProfile.find(filter)
-      .populate(
-        "userId",
-        "fullName username email contactNo profileImage"
-      )
-      .sort({ isNewProvider: -1, ratingAverage: -1, createdAt: -1 })
-      .lean();
+  .populate(
+    "userId",
+    "fullName username email contactNo profileImage"
+  )
+  .lean();
+
+providers.sort((a, b) => {
+  // New providers first
+  if (a.isNewProvider !== b.isNewProvider) {
+    return a.isNewProvider ? -1 : 1;
+  }
+
+  // Alphabetical order within each group
+  const nameA = a.userId?.fullName || "";
+  const nameB = b.userId?.fullName || "";
+
+  return nameA.localeCompare(nameB, undefined, {
+    sensitivity: "base",
+  });
+});
 
     // Get active services offered by these providers
     const providerIds = providers

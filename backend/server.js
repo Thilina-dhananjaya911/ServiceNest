@@ -21,6 +21,8 @@ const customerHomeRoutes = require("./routes/customerHomeRoutes");
 // Provider Home and Dashboard routes
 const providerDashboardRoutes =
   require("./routes/providerDashboardRoutes");
+const providerServiceRoutes =
+  require("./routes/providerServiceRoutes");
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use("/api/customer", customerHomeRoutes);
 
 // Provider Home and Dashboard API
 app.use("/api/provider", providerDashboardRoutes);
+
+app.use("/api/provider/services", providerServiceRoutes);
 
 app.get("/", (req, res) => {
   res.json({
