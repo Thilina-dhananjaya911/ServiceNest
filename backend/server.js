@@ -17,6 +17,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const customerHomeRoutes = require("./routes/customerHomeRoutes");
+const aboutRoutes = require("./routes/aboutRoutes");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/customer", customerHomeRoutes);
+app.use("/api/about", aboutRoutes);
 
 app.get("/", (req, res) => {
   res.json({
