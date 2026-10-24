@@ -19,11 +19,18 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const customerHomeRoutes = require("./routes/customerHomeRoutes");
 const aboutRoutes = require("./routes/aboutRoutes");
 
+// Provider Home and Dashboard routes
+const providerDashboardRoutes =
+  require("./routes/providerDashboardRoutes");
+const providerServiceRoutes =
+  require("./routes/providerServiceRoutes");
+
 const app = express();
 
 connectDB();
 
 app.use(express.json());
+
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -37,6 +44,11 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/customer", customerHomeRoutes);
 app.use("/api/about", aboutRoutes);
+
+// Provider Home and Dashboard API
+app.use("/api/provider", providerDashboardRoutes);
+
+app.use("/api/provider/services", providerServiceRoutes);
 
 app.get("/", (req, res) => {
   res.json({

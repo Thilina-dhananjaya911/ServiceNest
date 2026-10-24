@@ -1,4 +1,10 @@
 const ProviderProfile = require("../models/ProviderProfile");
+const ProviderService = require("../models/ProviderService");
+const Service = require("../models/Service");
+const ServiceCategory = require("../models/ServiceCategory");
+const Availability = require("../models/Availability");
+const Review = require("../models/Review");
+const ServiceRequest = require("../models/ServiceRequest");
 
 // Create provider profile
 const createProviderProfile = async (req, res) => {
@@ -176,11 +182,12 @@ const updateProviderProfile = async (req, res) => {
   }
 };
 
-// Get a provider profile by user ID
+// Get complete provider profile by user ID
 const getProviderProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Get provider profile and basic user information
     const profile = await ProviderProfile.findOne({
       userId,
       isActive: true,
@@ -189,35 +196,258 @@ const getProviderProfileByUserId = async (req, res) => {
       "fullName username email contactNo profileImage"
     );
 
-    if (!profile) {
+    if (!profile || !profile.userId) {
       return res.status(404).json({
         message: "Provider profile not found",
       });
     }
 
-    res.status(200).json({
+    const providerId = profile.userId._id;
+
+    // Retrieve services, availability, reviews, and completed jobs
+    const [
+      services,
+      availability,
+      reviews,
+      completedJobs,
+    ] = await Promise.all([
+      ProviderService.find({
+        providerId,
+        isActive: true,
+      })
+        .populate({
+          path: "serviceId",
+          select: "name description categoryId",
+          populate: {
+            path: "categoryId",
+            select: "name icon",
+          },
+        })
+        .lean(),
+
+      Availability.find({
+        providerId,
+      })
+        .sort({ dayOfWeek: 1 })
+        .lean(),
+
+      Review.find({
+        providerId,
+        isVisible: true,
+      })
+        .populate("customerId", "fullName profileImage")
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      ServiceRequest.countDocuments({
+        providerId,
+        status: "completed",
+      }),
+    ]);
+
+    // Calculate rating statistics from visible reviews
+    const totalReviews = reviews.length;
+
+    const ratingAverage = totalReviews
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+        totalReviews
+      : 0;
+
+    const ratingDistribution = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
+
+    reviews.forEach((review) => {
+      ratingDistribution[review.rating] += 1;
+    });
+
+    return res.status(200).json({
       message: "Provider profile retrieved successfully",
-      profile,
+      profile: {
+        ...profile.toObject(),
+        completedJobs,
+        ratingAverage: Number(ratingAverage.toFixed(1)),
+        totalReviews,
+      },
+      services,
+      availability,
+      reviews,
+      ratingDistribution,
     });
   } catch (error) {
     console.error("Get provider profile by user ID error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error while retrieving provider profile",
     });
   }
 };
 
 // Get all active provider profiles
+
 const getAllProviders = async (req, res) => {
   try {
-    const providers = await ProviderProfile.find({
+    const { search, category, location } = req.query;
+
+    // Get active and verified provider profiles
+    const filter = {
       isActive: true,
       isVerified: true,
-    }).populate(
-      "userId",
-      "fullName username email contactNo profileImage"
-    );
+    };
+
+    if (location && location.trim()) {
+      const locationRegex = new RegExp(
+        location.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i"
+      );
+
+      filter.$or = [
+        { area: locationRegex },
+        { district: locationRegex },
+        { province: locationRegex },
+      ];
+    }
+
+    let providers = await ProviderProfile.find(filter)
+  .populate(
+    "userId",
+    "fullName username email contactNo profileImage"
+  )
+  .lean();
+
+providers.sort((a, b) => {
+  // New providers first
+  if (a.isNewProvider !== b.isNewProvider) {
+    return a.isNewProvider ? -1 : 1;
+  }
+
+  // Alphabetical order within each group
+  const nameA = a.userId?.fullName || "";
+  const nameB = b.userId?.fullName || "";
+
+  return nameA.localeCompare(nameB, undefined, {
+    sensitivity: "base",
+  });
+});
+
+    // Get active services offered by these providers
+    const providerIds = providers
+      .filter((provider) => provider.userId)
+      .map((provider) => provider.userId._id);
+
+    const offers = await ProviderService.find({
+      providerId: { $in: providerIds },
+      isActive: true,
+    })
+      .populate({
+        path: "serviceId",
+        select: "name categoryId",
+        populate: {
+          path: "categoryId",
+          select: "name icon",
+        },
+      })
+      .lean();
+
+    const offersByProvider = {};
+
+    offers.forEach((offer) => {
+      if (!offer.serviceId) return;
+
+      const providerId = offer.providerId.toString();
+
+      if (!offersByProvider[providerId]) {
+        offersByProvider[providerId] = [];
+      }
+
+      offersByProvider[providerId].push(offer);
+    });
+
+    providers = providers.map((provider) => {
+      const providerOffers =
+        offersByProvider[provider.userId?._id.toString()] || [];
+
+      const serviceNames = [
+        ...new Set(
+          providerOffers.map((offer) => offer.serviceId.name)
+        ),
+      ];
+
+      const categories = [
+        ...new Map(
+          providerOffers
+            .filter((offer) => offer.serviceId.categoryId)
+            .map((offer) => [
+              offer.serviceId.categoryId._id.toString(),
+              {
+                _id: offer.serviceId.categoryId._id,
+                name: offer.serviceId.categoryId.name,
+                icon: offer.serviceId.categoryId.icon,
+              },
+            ])
+        ).values(),
+      ];
+
+      const pricesFrom = providerOffers.map(
+        (offer) => offer.priceFrom
+      );
+
+      const pricesTo = providerOffers.map((offer) =>
+        offer.priceTo != null ? offer.priceTo : offer.priceFrom
+      );
+
+      return {
+        ...provider,
+        services: serviceNames,
+        categories,
+        priceFrom: pricesFrom.length
+          ? Math.min(...pricesFrom)
+          : null,
+        priceTo: pricesTo.length
+          ? Math.max(...pricesTo)
+          : null,
+      };
+    });
+
+    // Filter by provider name, username, service, or category
+    if (search && search.trim()) {
+      const searchText = search.trim().toLowerCase();
+
+      providers = providers.filter((provider) => {
+        const fullName = provider.userId?.fullName || "";
+        const username = provider.userId?.username || "";
+        const serviceMatch = provider.services.some((name) =>
+          name.toLowerCase().includes(searchText)
+        );
+        const categoryMatch = provider.categories.some((item) =>
+          item.name.toLowerCase().includes(searchText)
+        );
+
+        return (
+          fullName.toLowerCase().includes(searchText) ||
+          username.toLowerCase().includes(searchText) ||
+          serviceMatch ||
+          categoryMatch
+        );
+      });
+    }
+
+    // Filter by category name or category ID
+    if (category && category.trim()) {
+      const categoryText = category.trim().toLowerCase();
+
+      providers = providers.filter((provider) =>
+        provider.categories.some(
+          (item) =>
+            item._id.toString() === category.trim() ||
+            item.name.toLowerCase() === categoryText
+        )
+      );
+    }
 
     res.status(200).json({
       message: "Providers retrieved successfully",
@@ -233,6 +463,7 @@ const getAllProviders = async (req, res) => {
   }
 };
 
+
 module.exports = {
   createProviderProfile,
   getMyProviderProfile,
@@ -240,3 +471,4 @@ module.exports = {
   getProviderProfileByUserId,
   getAllProviders,
 };
+
