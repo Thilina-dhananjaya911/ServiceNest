@@ -2,6 +2,9 @@ const ProviderProfile = require("../models/ProviderProfile");
 const ProviderService = require("../models/ProviderService");
 const Service = require("../models/Service");
 const ServiceCategory = require("../models/ServiceCategory");
+const Availability = require("../models/Availability");
+const Review = require("../models/Review");
+const ServiceRequest = require("../models/ServiceRequest");
 
 // Create provider profile
 const createProviderProfile = async (req, res) => {
@@ -179,11 +182,12 @@ const updateProviderProfile = async (req, res) => {
   }
 };
 
-// Get a provider profile by user ID
+// Get complete provider profile by user ID
 const getProviderProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Get provider profile and basic user information
     const profile = await ProviderProfile.findOne({
       userId,
       isActive: true,
@@ -192,20 +196,92 @@ const getProviderProfileByUserId = async (req, res) => {
       "fullName username email contactNo profileImage"
     );
 
-    if (!profile) {
+    if (!profile || !profile.userId) {
       return res.status(404).json({
         message: "Provider profile not found",
       });
     }
 
-    res.status(200).json({
+    const providerId = profile.userId._id;
+
+    // Retrieve services, availability, reviews, and completed jobs
+    const [
+      services,
+      availability,
+      reviews,
+      completedJobs,
+    ] = await Promise.all([
+      ProviderService.find({
+        providerId,
+        isActive: true,
+      })
+        .populate({
+          path: "serviceId",
+          select: "name description categoryId",
+          populate: {
+            path: "categoryId",
+            select: "name icon",
+          },
+        })
+        .lean(),
+
+      Availability.find({
+        providerId,
+      })
+        .sort({ dayOfWeek: 1 })
+        .lean(),
+
+      Review.find({
+        providerId,
+        isVisible: true,
+      })
+        .populate("customerId", "fullName profileImage")
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      ServiceRequest.countDocuments({
+        providerId,
+        status: "completed",
+      }),
+    ]);
+
+    // Calculate rating statistics from visible reviews
+    const totalReviews = reviews.length;
+
+    const ratingAverage = totalReviews
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+        totalReviews
+      : 0;
+
+    const ratingDistribution = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
+
+    reviews.forEach((review) => {
+      ratingDistribution[review.rating] += 1;
+    });
+
+    return res.status(200).json({
       message: "Provider profile retrieved successfully",
-      profile,
+      profile: {
+        ...profile.toObject(),
+        completedJobs,
+        ratingAverage: Number(ratingAverage.toFixed(1)),
+        totalReviews,
+      },
+      services,
+      availability,
+      reviews,
+      ratingDistribution,
     });
   } catch (error) {
     console.error("Get provider profile by user ID error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error while retrieving provider profile",
     });
   }
