@@ -16,6 +16,7 @@ const serviceRequestRoutes = require("./routes/serviceRequestRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 const customerHomeRoutes = require("./routes/customerHomeRoutes");
 const aboutRoutes = require("./routes/aboutRoutes");
 
@@ -42,6 +43,7 @@ app.use("/api/service-requests", serviceRequestRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
 app.use("/api/customer", customerHomeRoutes);
 app.use("/api/about", aboutRoutes);
 
