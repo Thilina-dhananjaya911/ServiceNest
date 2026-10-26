@@ -19,6 +19,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const customerHomeRoutes = require("./routes/customerHomeRoutes");
 const aboutRoutes = require("./routes/aboutRoutes");
+const customerRequestRoutes = require("./routes/customerRequestRoutes");
 
 // Provider Home and Dashboard routes
 const providerDashboardRoutes =
@@ -46,6 +47,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/customer", customerHomeRoutes);
 app.use("/api/about", aboutRoutes);
+app.use("/api/customer/requests", customerRequestRoutes);
 
 // Provider Home and Dashboard API
 app.use("/api/provider", providerDashboardRoutes);
