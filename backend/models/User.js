@@ -69,6 +69,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+        savedProviders: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     isActive: {
       type: Boolean,
