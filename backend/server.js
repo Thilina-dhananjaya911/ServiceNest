@@ -22,6 +22,7 @@ const aboutRoutes = require("./routes/aboutRoutes");
 const customerRequestRoutes = require("./routes/customerRequestRoutes");
 const customerProfileRoutes = require("./routes/customerProfileRoutes");
 const customerSavedProvidersRoutes = require("./routes/customerSavedProvidersRoutes");
+const customerNotificationRoutes = require("./routes/customerNotificationRoutes");
 
 // Provider Home and Dashboard routes
 const providerDashboardRoutes =
@@ -52,6 +53,7 @@ app.use("/api/about", aboutRoutes);
 app.use("/api/customer/requests", customerRequestRoutes);
 app.use("/api/customer/profile", customerProfileRoutes);
 app.use("/api/customer/saved-providers", customerSavedProvidersRoutes);
+app.use("/api/customer/notifications", customerNotificationRoutes);
 
 // Provider Home and Dashboard API
 app.use("/api/provider", providerDashboardRoutes);
